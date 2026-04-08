@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso Restrito</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="page-auth">
+    <main class="auth-shell">
+        <section class="card auth-card">
+            <div class="auth-header">
+                <img
+                    src="{{ url_for('static', filename='imagem-epalc.webp') }}"
+                    alt="Logotipo da EPALC"
+                    class="auth-logo"
+                >
+                <div>
+                    <span class="eyebrow">Área reservada</span>
+                    <h1>Painel Administrativo</h1>
+                    <p>Acesso exclusivo da Direção / Núcleo de Apoio.</p>
+                </div>
+            </div>
+
+            {% with mensagens = get_flashed_messages(with_categories=true) %}
+            {% if mensagens %}
+            <div class="alerts">
+                {% for categoria, mensagem in mensagens %}
+                <div class="{{ categoria }}">{{ mensagem }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            {% if erro %}
+            <div class="erro">{{ erro }}</div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('login') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <label for="senha">Senha</label>
+                <input id="senha" type="password" name="senha" autocomplete="current-password" required>
+                <button type="submit">Entrar</button>
+            </form>
+
+            <a href="{{ url_for('index') }}" class="link-admin">Voltar ao portal público</a>
+        </section>
+    </main>
+</body>
+</html>
