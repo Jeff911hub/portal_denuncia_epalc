@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Erro {{ codigo }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="page-auth">
+    <main class="auth-shell">
+        <section class="card auth-card">
+            <span class="eyebrow">Erro {{ codigo }}</span>
+            <h1>Algo correu mal</h1>
+            <p>{{ mensagem }}</p>
+            <a href="{{ url_for('index') }}" class="link-admin">Voltar ao portal</a>
+        </section>
+    </main>
+</body>
+</html>
