@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Denúncia</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="page-landing">
+    <main class="landing-shell">
+        <section class="hero card">
+            <div class="hero-copy">
+                <span class="eyebrow">Canal confidencial</span>
+                <h1>Portal de Denúncia</h1>
+                <p class="hero-text">
+                    Espaço seguro para reportar situações de bullying, assédio, violência,
+                    corrupção ou outras ocorrências relevantes.
+                </p>
+                <ul class="hero-points">
+                    <li>Sem recolha de dados pessoais no formulário</li>
+                    <li>Leitura reservada à equipa autorizada</li>
+                    <li>Registo organizado para acompanhamento interno</li>
+                </ul>
+            </div>
+
+            <div class="hero-brand">
+                <img
+                    src="{{ url_for('static', filename='imagem-epalc.webp') }}"
+                    alt="Logotipo da EPALC"
+                    class="hero-logo"
+                >
+            </div>
+        </section>
+
+        {% with mensagens = get_flashed_messages(with_categories=true) %}
+        {% if mensagens %}
+        <section class="alerts">
+            {% for categoria, mensagem in mensagens %}
+            <div class="{{ categoria }}">{{ mensagem }}</div>
+            {% endfor %}
+        </section>
+        {% endif %}
+        {% endwith %}
+
+        <section class="content-grid">
+            <article class="card info-card">
+                <h2>Antes de enviar</h2>
+                <p>
+                    Descreve os factos com clareza, evita julgamentos vagos e inclui apenas a
+                    informação necessária para a análise.
+                </p>
+                <div class="info-list">
+                    <div>
+                        <strong>Inclui</strong>
+                        <p>Datas, contexto, local e o que aconteceu.</p>
+                    </div>
+                    <div>
+                        <strong>Evita</strong>
+                        <p>Dados sensíveis desnecessários ou acusações sem descrição factual.</p>
+                    </div>
+                </div>
+                <a href="{{ url_for('login') }}" class="link-admin">Acesso ao painel administrativo</a>
+            </article>
+
+            <section class="card form-card">
+                <h2>Submeter denúncia</h2>
+                <form action="{{ url_for('denuncia') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <label for="categoria">Tipo de situação</label>
+                    <select id="categoria" name="categoria" required>
+                        <option value="">Selecione</option>
+                        {% for valor, rotulo in categorias_disponiveis.items() %}
+                        <option value="{{ valor }}">{{ rotulo }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <label for="mensagem">Descreve o ocorrido</label>
+                    <textarea
+                        id="mensagem"
+                        name="mensagem"
+                        rows="7"
+                        maxlength="2000"
+                        placeholder="Explica o que aconteceu, quando aconteceu e qualquer contexto importante."
+                        required
+                    ></textarea>
+
+                    <div class="form-meta">
+                        <span>Máximo de 2000 caracteres.</span>
+                        <span>Quanto mais claro, melhor a análise.</span>
+                    </div>
+
+                    <button type="submit">Enviar denúncia</button>
+                </form>
+            </section>
+        </section>
+    </main>
+</body>
+</html>
