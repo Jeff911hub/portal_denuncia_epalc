@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="page-dashboard">
+    <main class="dashboard-shell">
+        <header class="dashboard-header card">
+            <div class="dashboard-title">
+                <img
+                    src="{{ url_for('static', filename='imagem-epalc.webp') }}"
+                    alt="Logotipo da EPALC"
+                    class="dashboard-logo"
+                >
+                <div>
+                    <span class="eyebrow">Gestão interna</span>
+                    <h1>Painel Administrativo</h1>
+                    <p>Consulta, filtra e exporta as denúncias recebidas.</p>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <a
+                    href="{{ url_for('exportar', q=filtros['q'], status=filtros['status'], categoria=filtros['categoria']) }}"
+                    class="btn-link"
+                >
+                    Exportar CSV
+                </a>
+                <form action="{{ url_for('logout') }}" method="POST" class="inline-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="logout">Sair</button>
+                </form>
+            </div>
+        </header>
+
+        {% with mensagens = get_flashed_messages(with_categories=true) %}
+        {% if mensagens %}
+        <section class="alerts">
+            {% for categoria, mensagem in mensagens %}
+            <div class="{{ categoria }}">{{ mensagem }}</div>
+            {% endfor %}
+        </section>
+        {% endif %}
+        {% endwith %}
+
+        <section class="stats-grid">
+            <article class="card stat-card">
+                <span class="stat-label">Total</span>
+                <strong class="stat-value">{{ resumo["total"] }}</strong>
+            </article>
+            <article class="card stat-card">
+                <span class="stat-label">Pendentes</span>
+                <strong class="stat-value">{{ resumo["pendentes"] }}</strong>
+            </article>
+            <article class="card stat-card">
+                <span class="stat-label">Resolvidas</span>
+                <strong class="stat-value">{{ resumo["resolvidos"] }}</strong>
+            </article>
+        </section>
+
+        <section class="dashboard-grid">
+            <aside class="card sidebar-card">
+                <h2>Filtros</h2>
+                <form action="{{ url_for('painel') }}" method="GET" class="filter-form">
+                    <label for="q">Pesquisar</label>
+                    <input
+                        id="q"
+                        type="search"
+                        name="q"
+                        value="{{ filtros['q'] }}"
+                        placeholder="Procurar por texto ou categoria"
+                    >
+
+                    <label for="status">Estado</label>
+                    <select id="status" name="status">
+                        <option value="">Todos</option>
+                        <option value="pendente" {% if filtros["status"] == "pendente" %}selected{% endif %}>Pendente</option>
+                        <option value="resolvido" {% if filtros["status"] == "resolvido" %}selected{% endif %}>Resolvido</option>
+                    </select>
+
+                    <label for="categoria">Categoria</label>
+                    <select id="categoria" name="categoria">
+                        <option value="">Todas</option>
+                        {% for valor, rotulo in categorias_disponiveis.items() %}
+                        <option value="{{ valor }}" {% if filtros["categoria"] == valor %}selected{% endif %}>{{ rotulo }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <button type="submit">Aplicar filtros</button>
+                    <a href="{{ url_for('painel') }}" class="link-admin">Limpar filtros</a>
+                </form>
+
+                <div class="sidebar-summary">
+                    <h3>Por categoria</h3>
+                    {% for item in resumo["categorias"] %}
+                    <div class="summary-row">
+                        <span>{{ categorias_disponiveis.get(item["categoria"], item["categoria"]) }}</span>
+                        <strong>{{ item["total"] }}</strong>
+                    </div>
+                    {% else %}
+                    <p>Ainda não existem registos.</p>
+                    {% endfor %}
+                </div>
+            </aside>
+
+            <section class="results-panel">
+                <div class="results-header card">
+                    <div>
+                        <h2>Registos</h2>
+                        <p>{{ total_filtrado }} resultado(s) encontrado(s).</p>
+                    </div>
+                </div>
+
+                {% for d in denuncias %}
+                <article class="card denuncia-card">
+                    <div class="denuncia-top">
+                        <span class="chip">{{ categorias_disponiveis.get(d["categoria"], d["categoria"]) }}</span>
+                        <span class="status-badge status-{{ d['status'] }}">{{ d["status"] }}</span>
+                    </div>
+
+                    <p class="denuncia-message">{{ d["mensagem"] }}</p>
+
+                    <div class="denuncia-meta">
+                        <span><strong>ID:</strong> {{ d["id"] }}</span>
+                        <span><strong>Data:</strong> {{ d["data"] }}</span>
+                    </div>
+
+                    <div class="acoes">
+                        <form
+                            action="{{ url_for('alterar_estado', denuncia_id=d['id'], q=filtros['q'], status=filtros['status'], categoria=filtros['categoria'], page=pagina) }}"
+                            method="POST"
+                            class="inline-form"
+                        >
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="status" value="{{ 'resolvido' if d['status'] == 'pendente' else 'pendente' }}">
+                            <button class="btn {{ 'btn-resolver' if d['status'] == 'pendente' else 'btn-secondary' }}" type="submit">
+                                {{ 'Marcar como resolvida' if d['status'] == 'pendente' else 'Reabrir denúncia' }}
+                            </button>
+                        </form>
+
+                        <form
+                            action="{{ url_for('apagar', denuncia_id=d['id'], q=filtros['q'], status=filtros['status'], categoria=filtros['categoria'], page=pagina) }}"
+                            method="POST"
+                            class="inline-form"
+                        >
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn btn-apagar" type="submit">Apagar</button>
+                        </form>
+                    </div>
+                </article>
+                {% else %}
+                <article class="card empty-state">
+                    <h3>Sem resultados</h3>
+                    <p>Não encontrámos denúncias com os filtros atuais.</p>
+                </article>
+                {% endfor %}
+
+                {% if total_paginas > 1 %}
+                <nav class="pagination card" aria-label="Paginação">
+                    {% for numero in range(1, total_paginas + 1) %}
+                    <a
+                        href="{{ url_for('painel', q=filtros['q'], status=filtros['status'], categoria=filtros['categoria'], page=numero) }}"
+                        class="page-link {% if numero == pagina %}is-active{% endif %}"
+                    >
+                        {{ numero }}
+                    </a>
+                    {% endfor %}
+                </nav>
+                {% endif %}
+            </section>
+        </section>
+    </main>
+</body>
+</html>
